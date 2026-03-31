@@ -1,0 +1,6 @@
+torch
+numpy
+sentencepiece
+matplotlib
+tqdm
+pandas

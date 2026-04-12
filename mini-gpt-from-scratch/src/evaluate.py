@@ -65,7 +65,9 @@ def extract_state_dict(raw_ckpt: Any) -> dict[str, torch.Tensor]:
         for key in ("model", "model_state_dict", "state_dict"):
             if key in raw_ckpt and isinstance(raw_ckpt[key], dict):
                 return raw_ckpt[key]
-        if all(isinstance(k, str) for k in raw_ckpt.keys()):
+        if all(isinstance(k, str) for k in raw_ckpt.keys()) and all(
+            isinstance(v, torch.Tensor) for v in raw_ckpt.values()
+        ):
             return raw_ckpt
     raise ValueError("Unsupported checkpoint format.")
 

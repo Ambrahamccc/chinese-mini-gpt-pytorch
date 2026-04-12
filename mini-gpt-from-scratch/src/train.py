@@ -139,6 +139,18 @@ def save_checkpoint(
     torch.save(ckpt, path)
 
 
+def extract_state_dict(raw_ckpt: Any) -> dict[str, torch.Tensor]:
+    if isinstance(raw_ckpt, dict):
+        for key in ("model", "model_state_dict", "state_dict"):
+            if key in raw_ckpt and isinstance(raw_ckpt[key], dict):
+                return raw_ckpt[key]
+        if all(isinstance(k, str) for k in raw_ckpt.keys()) and all(
+            isinstance(v, torch.Tensor) for v in raw_ckpt.values()
+        ):
+            return raw_ckpt
+    raise ValueError("Unsupported checkpoint format.")
+
+
 def generate_sample(
     model: MiniGPT,
     sp: spm.SentencePieceProcessor,
@@ -235,8 +247,7 @@ def main() -> None:
 
     if args.resume and last_ckpt_path.exists():
         raw_ckpt = torch.load(last_ckpt_path, map_location=device)
-        state_dict = raw_ckpt["model"] if "model" in raw_ckpt else raw_ckpt
-        model.load_state_dict(state_dict)
+        model.load_state_dict(extract_state_dict(raw_ckpt))
         if isinstance(raw_ckpt, dict) and "optimizer" in raw_ckpt:
             optimizer.load_state_dict(raw_ckpt["optimizer"])
         start_iter = int(raw_ckpt.get("step", 0)) + 1 if isinstance(raw_ckpt, dict) else 0
